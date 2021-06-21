@@ -56,6 +56,27 @@ class PostureNotificationManager:
 
         self.posture_is_good = posture_is_good
 
+    def send_notification(self):
+        send_cmd = [
+            "gdbus", "call",
+            "--session",
+            "--dest", "org.freedesktop.Notifications",
+            "--object-path", "/org/freedesktop/Notifications",
+            "--method", "org.freedesktop.Notifications.Notify",
+            "posture_notifier",
+            "0",
+            "face-tired",
+            f'"{self.notification_header}"',
+            f'"{self.notification_body}"',
+            "[]",
+            "{}",
+            "0"]
+        # print(" ".join(send_cmd))
+        result = subprocess.run(send_cmd, capture_output=True)
+
+        stdout = result.stdout.decode('ascii').strip()
+        self.notification_id = parse("(uint32 {id:d},)", stdout)['id']
+
     def clear_notification(self):
         subprocess.run([
             "gdbus", "call",
@@ -66,27 +87,6 @@ class PostureNotificationManager:
             str(self.notification_id),
         ], capture_output=True)
         self.notification_id = None
-
-    def send_notification(self):
-        result = subprocess.run([
-            "gdbus", "call",
-            "--session",
-            "--dest", "org.freedesktop.Notifications",
-            "--object-path", "/org/freedesktop/Notifications",
-            "--method", "org.freedesktop.Notifications.Notify",
-            "posture_notifier",
-            "0",
-            "utilities-terminal",
-            f'"{self.notification_header}"',
-            f'"{self.notification_body}"',
-            "[]",
-            "{}",
-            "0"], capture_output=True)
-
-        stdout = result.stdout.decode('ascii').strip()
-        self.notification_id = parse("(uint32 {id:d},)", stdout)['id']
-
-
 
 
 class MinimalSubscriber(Node):
